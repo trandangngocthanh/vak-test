@@ -199,6 +199,22 @@ h2{font-size:21px;line-height:1.45;font-weight:600;margin-bottom:20px}
 .mix ul{list-style:none;margin-top:10px;display:grid;gap:8px}
 .mix li{position:relative;padding-left:20px}
 .mix li::before{content:'';position:absolute;left:3px;top:.62em;width:6px;height:6px;background:var(--gold);transform:rotate(45deg)}
+.tips{display:grid;gap:12px;margin-bottom:24px}
+.tips-title{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold-light)}
+.tcard{border-radius:18px;padding:18px;background:linear-gradient(135deg,rgba(229,176,78,.12),rgba(255,255,255,.03));border:1px solid var(--line-strong)}
+.tcard.grow{background:linear-gradient(135deg,rgba(218,11,76,.16),rgba(255,255,255,.03));border-color:rgba(240,48,110,.38)}
+.tcard-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.badges{display:flex;gap:5px;flex:none}
+.badges b{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;font-weight:800;font-size:15px;color:var(--navy-900)}
+.badges .bd-V{background:var(--v)}.badges .bd-A{background:var(--a)}.badges .bd-K{background:var(--k);color:#fff}
+.badges b.weak{background:transparent!important;border:1.5px dashed currentColor;opacity:.85}
+.badges .bd-V.weak{color:var(--v)}.badges .bd-A.weak{color:var(--a)}.badges .bd-K.weak{color:var(--k)}
+.tcard-head small{display:block;font-size:11px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:var(--ivory-mute)}
+.tcard-head strong{display:block;font-size:17px;font-weight:700;line-height:1.35}
+.tcard p{font-size:15px;color:var(--ivory-dim);margin-top:8px}
+.tcard p:first-of-type{margin-top:0}
+.tcard .lbl{color:var(--gold-light);font-weight:600}
+.grow .lbl{color:#FF8FB3}
 .insight{position:relative;border-radius:18px;padding:22px 20px;margin:22px 0 16px;font-size:15px;color:var(--ivory-dim);
   background:linear-gradient(135deg,rgba(11,69,176,.5),rgba(1,45,120,.35));border:1px solid var(--line)}
 .insight strong{display:block;font-size:17px;font-weight:700;color:var(--gold-light);margin-bottom:6px}
@@ -305,6 +321,7 @@ h2{font-size:21px;line-height:1.45;font-weight:600;margin-bottom:20px}
         <div class="ring-wrap"><div class="ring" id="r-ring"></div><div class="ring-center"><b id="r-ring-main"></b><span id="r-ring-sub"></span></div></div>
         <div class="bars" id="r-bars"></div>
       </div>
+      <div class="tips" id="r-tips" hidden></div>
       <div id="r-profiles"></div>
       <div class="insight"><strong>Dành cho nhà quản lý &amp; người đào tạo</strong>Trong một lớp học hay đội nhóm luôn có đủ cả V, A và K. Buổi đào tạo, cuộc họp hiệu quả cần "chạm" cả ba: có hình ảnh để nhìn, có trao đổi để nghe, có hoạt động để làm.</div>
       <p class="note">VAK giúp bạn nhận diện thói quen tiếp nhận thông tin ưu tiên, không phải thước đo năng lực hay trí thông minh. Ai cũng dùng cả ba kênh – học hiệu quả nhất là phối hợp các kênh phù hợp với nội dung cần học.</p>
@@ -422,13 +439,49 @@ const PROFILES = {
     learn: ['Ưu tiên workshop, đóng vai (role-play), case study, dự án thật', 'Nghỉ ngắn để vận động sau mỗi 25–30 phút học', 'Áp dụng điều vừa học vào công việc trong vòng 24 giờ'],
     work: ['Khi nhận việc: đề nghị được làm thử một lần có người kèm', 'Khi giao việc hay đào tạo: thêm phần giải thích và tài liệu để người khác theo kịp nhịp "bắt tay làm ngay" của bạn'],
     watch: 'Dễ chán với lý thuyết suông và những buổi ngồi nghe kéo dài.'
-  },
-  MIX: {
-    title: 'Nhóm Đa kênh – Linh hoạt cả V, A và K',
-    tagline: 'Bạn chuyển đổi linh hoạt giữa nhìn, nghe và trải nghiệm tùy tình huống.',
-    intro: 'Ba kênh của bạn khá cân bằng. Đây là lợi thế: bạn thích nghi tốt với nhiều cách học và dễ đồng điệu với nhiều kiểu người.',
-    tips: ['Chọn kênh theo nội dung: số liệu → xem biểu đồ; ý tưởng → thảo luận; kỹ năng → thực hành', 'Khi học điều quan trọng, kết hợp cả ba: đọc – trao đổi – làm thử', 'Trong đội nhóm, bạn là "cầu nối" tốt giữa những người khác phong cách']
   }
+};
+
+/* 7 TÌNH HUỐNG KẾT QUẢ & ĐỀ XUẤT
+   Trội đơn: kênh cao nhất hơn kênh thứ hai từ 3 điểm (vd 11–5–4)
+   Trội cặp: không trội đơn, kênh thứ hai hơn kênh thấp nhất từ 3 điểm (vd V9–A3–K8 → V+K, thiếu A)
+   Đa kênh: các trường hợp còn lại (vd 7–7–6) */
+const SCENARIOS = {
+  V:  { title: 'Trội đơn V – Tiếp nhận qua Hình ảnh',
+        summary: 'Bạn dựa chủ yếu vào kênh nhìn. Nghe giảng dài hoặc phải "làm luôn" khi chưa thấy mô hình là lúc bạn dễ đuối nhất.',
+        learn: 'Xin trước slide, tài liệu; tóm tắt mỗi bài học bằng 1 sơ đồ một trang.',
+        grow: 'Sau mỗi buổi, nói lại 3 ý chính trong 2 phút (A) và áp dụng 1 ý vào việc thật trong 24 giờ (K).',
+        lead: 'Bạn dễ dồn sức vào slide đẹp. Cứ 15 phút, chèn một câu chuyện hoặc câu hỏi thảo luận (A) và một hoạt động thực hành ngắn (K).' },
+  A:  { title: 'Trội đơn A – Tiếp nhận qua Âm thanh',
+        summary: 'Bạn dựa chủ yếu vào kênh nghe và trao đổi. Tài liệu dày chữ hoặc thực hành không có người hướng dẫn là lúc bạn dễ đuối nhất.',
+        learn: 'Học nhóm, hỏi – đáp, ghi âm bài giảng (khi được phép) để nghe lại.',
+        grow: 'Sau buổi học, chuyển lời giảng thành 1 sơ đồ (V) và thực hành ngay 1 kỹ năng vừa nghe, có người góp ý (K).',
+        lead: 'Bạn nói hay nhưng dễ nói nhiều. Mỗi ý chính nên có 1 hình hoặc slide tóm tắt (V) và 1 bài tập thực hành (K).' },
+  K:  { title: 'Trội đơn K – Tiếp nhận qua Trải nghiệm',
+        summary: 'Bạn dựa chủ yếu vào trải nghiệm. Ngồi nghe lý thuyết lâu hoặc tự đọc tài liệu là lúc bạn dễ mất tập trung nhất.',
+        learn: 'Chọn workshop, role-play, dự án thật; nghỉ ngắn vận động sau mỗi 25–30 phút.',
+        grow: 'Sau khi làm, vẽ lại quy trình thành checklist (V) và giải thích cho đồng nghiệp vì sao làm như vậy (A).',
+        lead: 'Bạn thích cho học viên "làm luôn". Trước mỗi hoạt động, dành 3–5 phút trình bày mô hình bằng hình (V) và giải thích mục tiêu bằng lời (A).' },
+  VA: { title: 'Trội cặp V + A – Nhìn & Nghe',
+        summary: 'Bạn tiếp thu tốt qua bài giảng có slide rõ và lời giải thích mạch lạc. Điểm cần lưu ý: hiểu nhanh nhưng chậm chuyển thành hành động.',
+        learn: 'Xem trước tài liệu, nghe giảng kèm ghi chú bằng sơ đồ.',
+        grow: 'Áp dụng 1 điều vừa học trong 24 giờ; ưu tiên khóa học có bài tập và tình huống thật.',
+        lead: 'Bạn giảng rõ, slide đẹp. Thêm hoạt động thực hành, đóng vai, trò chơi – người nhóm K trong lớp cần "làm" mới nhớ.' },
+  VK: { title: 'Trội cặp V + K – Nhìn & Làm',
+        summary: 'Bạn hiểu nhanh khi vừa được xem mẫu vừa bắt tay làm. Điểm cần lưu ý: dễ trôi thông tin trong cuộc họp chỉ nói, cuộc gọi, bài giảng dài.',
+        learn: 'Xem demo hoặc video thao tác → làm theo ngay → đối chiếu checklist.',
+        grow: 'Trong cuộc họp, ghi chú hoặc vẽ lại ý chính khi nghe; sau đó tóm tắt bằng lời "Ý anh/chị là…" để xác nhận.',
+        lead: 'Bạn hay "làm mẫu rồi cho làm". Dành thời gian giải thích bằng lời, kể chuyện và mở thảo luận cho người nhóm A.' },
+  AK: { title: 'Trội cặp A + K – Nghe & Làm',
+        summary: 'Bạn học tốt qua thảo luận, đóng vai, thực hành có người hướng dẫn. Điểm cần lưu ý: dễ bỏ sót thông tin trong tài liệu, email dài, báo cáo số liệu.',
+        learn: 'Học nhóm, role-play, coaching 1-1, vừa làm vừa hỏi.',
+        grow: 'Sau mỗi buổi, vẽ 1 sơ đồ 5 ý chính; đọc tiêu đề và biểu đồ trước khi đọc chi tiết.',
+        lead: 'Bạn dẫn dắt sôi nổi. Chuẩn bị slide, hình minh họa, tài liệu phát tay – người nhóm V trong lớp cần "nhìn thấy".' },
+  MIX:{ title: 'Đa kênh – Linh hoạt cả V, A và K',
+        summary: 'Ba kênh của bạn khá cân bằng. Bạn thích nghi tốt với nhiều cách học và dễ đồng điệu với nhiều kiểu người.',
+        learn: 'Chọn kênh theo nội dung: số liệu → xem biểu đồ; ý tưởng → thảo luận; kỹ năng → thực hành.',
+        grow: 'Không có kênh yếu rõ rệt. Khi học điều quan trọng, kết hợp cả ba: đọc – trao đổi – làm thử.',
+        lead: 'Bạn là "cầu nối" tốt giữa những người khác phong cách. Thiết kế mỗi buổi có đủ hình ảnh, lời giảng và hoạt động.' }
 };
 </script>
 
@@ -555,14 +608,18 @@ const PROFILES = {
     var pct = {}; parts.forEach(function (p) { pct[p.k] = p.f; });
 
     var sorted = CH.slice().sort(function (a, b) { return c[b] - c[a]; });
+    // 7 tình huống: trội đơn V/A/K, trội cặp VA/VK/AK, đa kênh (ngưỡng ghi ở khối SCENARIOS)
+    var s0 = c[sorted[0]], s1 = c[sorted[1]], s2 = c[sorted[2]];
     var kind, keys;
-    if (c[sorted[0]] - c[sorted[2]] <= 2) { kind = 'balanced'; keys = sorted; }
-    else if (c[sorted[0]] - c[sorted[1]] <= 1) { kind = 'combo'; keys = sorted.slice(0, 2); }
-    else { kind = 'single'; keys = [sorted[0]]; }
-    var label = kind === 'balanced' ? 'Đa kênh (V–A–K cân bằng)'
-      : kind === 'combo' ? keys.join('+') + ' – ' + keys.map(function (k) { return LABEL[k]; }).join(' & ')
-      : keys[0] + ' – ' + LABEL[keys[0]];
-    return { c: c, pct: pct, kind: kind, keys: keys, label: label, sorted: sorted };
+    if (s0 - s1 >= 3) { kind = 'single'; keys = [sorted[0]]; }
+    else if (s1 - s2 >= 3) { kind = 'combo'; keys = CH.filter(function (k) { return k === sorted[0] || k === sorted[1]; }); }
+    else { kind = 'balanced'; keys = sorted; }
+    var scen = kind === 'single' ? keys[0] : kind === 'combo' ? keys.join('') : 'MIX';
+    var weak = kind === 'balanced' ? [] : CH.filter(function (k) { return keys.indexOf(k) === -1; });
+    var label = kind === 'single' ? 'Trội đơn ' + keys[0] + ' (' + LABEL[keys[0]] + ')'
+      : kind === 'combo' ? 'Trội cặp ' + keys.join('+') + ' (thiếu ' + weak[0] + ')'
+      : 'Đa kênh';
+    return { c: c, pct: pct, kind: kind, keys: keys, scen: scen, weak: weak, label: label, sorted: sorted };
   }
 
   /* ---------- Form ---------- */
@@ -649,19 +706,11 @@ const PROFILES = {
 
   function renderResult(name, r) {
     $('#r-name').textContent = name;
-    var title, tagline, main, sub, mainClass;
-    if (r.kind === 'single') {
-      var k = r.keys[0];
-      title = PROFILES[k].title; tagline = PROFILES[k].tagline;
-      main = r.pct[k] + '%'; sub = LABEL[k]; mainClass = 'c-' + k;
-    } else if (r.kind === 'combo') {
-      title = 'Nhóm ' + r.keys.join('–') + ' – Kết hợp ' + LABEL[r.keys[0]] + ' & ' + LABEL[r.keys[1]];
-      tagline = 'Hai kênh ' + LABEL[r.keys[0]] + ' và ' + LABEL[r.keys[1]] + ' của bạn nổi trội gần ngang nhau – hãy tận dụng cả hai khi học và làm việc.';
-      main = r.keys.join('+'); sub = 'Kết hợp'; mainClass = 'gold-text';
-    } else {
-      title = PROFILES.MIX.title; tagline = PROFILES.MIX.tagline;
-      main = 'VAK'; sub = 'Đa kênh'; mainClass = 'gold-text';
-    }
+    var sc = SCENARIOS[r.scen];
+    var title = sc.title, tagline = sc.summary, main, sub, mainClass;
+    if (r.kind === 'single') { main = r.pct[r.keys[0]] + '%'; sub = 'Trội ' + LABEL[r.keys[0]]; mainClass = 'c-' + r.keys[0]; }
+    else if (r.kind === 'combo') { main = r.keys.join('+'); sub = 'Trội cặp'; mainClass = 'gold-text'; }
+    else { main = 'VAK'; sub = 'Đa kênh'; mainClass = 'gold-text'; }
     $('#r-title').textContent = title;
     $('#r-tagline').textContent = tagline;
     var m = $('#r-ring-main'); m.textContent = main; m.className = mainClass;
@@ -676,15 +725,23 @@ const PROFILES = {
       bars.appendChild(row);
     });
 
+    // Thẻ "Đề xuất cho bạn" theo tình huống
+    var growLabel = r.weak.length ? 'Bổ sung kênh ' + r.weak.map(function (k) { return k + ' (' + LABEL[k] + ')'; }).join(' & ') : 'Phát triển đều cả ba kênh';
+    var badges = (r.kind === 'balanced' ? CH : r.keys).map(function (k) { return '<b class="bd-' + k + '">' + k + '</b>'; }).join('') +
+      r.weak.map(function (k) { return '<b class="bd-' + k + ' weak">' + k + '</b>'; }).join('');
+    var tips = $('#r-tips');
+    tips.innerHTML = '<p class="tips-title">Đề xuất cho bạn</p>' +
+      '<div class="tcard"><div class="tcard-head"><span class="badges">' + badges + '</span>' +
+      '<span><small>Tình huống của bạn</small><strong>' + esc(r.label) + '</strong></span></div>' +
+      '<p><span class="lbl">Tự học hiệu quả:</span> ' + esc(sc.learn) + '</p>' +
+      '<p><span class="lbl">' + esc(growLabel) + ':</span> ' + esc(sc.grow) + '</p>' +
+      '<p><span class="lbl">Khi đào tạo, dẫn dắt:</span> ' + esc(sc.lead) + '</p></div>';
+    tips.hidden = false;
+
+    // Chi tiết từng kênh (thu gọn, bấm để mở)
     var box = $('#r-profiles'); box.innerHTML = '';
-    if (r.kind === 'single') box.appendChild(profileEl(r.keys[0], true, 'Điểm mạnh & gợi ý phát triển'));
-    else if (r.kind === 'combo') { box.appendChild(profileEl(r.keys[0], true)); box.appendChild(profileEl(r.keys[1], false)); }
-    else {
-      var mx = document.createElement('div'); mx.className = 'mix';
-      mx.innerHTML = esc(PROFILES.MIX.intro) + list(PROFILES.MIX.tips);
-      box.appendChild(mx);
-      r.sorted.forEach(function (k) { box.appendChild(profileEl(k, false)); });
-    }
+    var order = r.kind === 'balanced' ? r.sorted : r.keys.concat(r.weak);
+    order.forEach(function (k) { box.appendChild(profileEl(k, false, 'Chi tiết kênh ' + k + ' · ' + LABEL[k])); });
   }
 
   function drawRing(r, e) {
